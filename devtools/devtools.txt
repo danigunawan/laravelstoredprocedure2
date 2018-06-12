@@ -1,0 +1,259 @@
+REFF:
+
+
+1. Create Laravel Project 
+
+set env : 
+
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=base64:bhF+abzc+fSvDZFalbji5A4Zran5YVcIkQhbWM7U3RY=
+APP_DEBUG=true
+APP_LOG_LEVEL=debug
+APP_URL=http://localhost
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravelstoredprocedure2
+DB_USERNAME=root
+DB_PASSWORD=
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+SESSION_DRIVER=file
+QUEUE_DRIVER=sync
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_DRIVER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+
+2. buat database laravelstoredprocedure2 di mysqlworkbench atau heidisql
+
+########### SELECT FROM ALL ############
+3. buat STORED PROCEDURE viewStudent (SELECT ALL)
+-  call viewStudent();
+
+SP viewStudent :
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `viewStudent`()
+BEGIN
+	SELECT * FROM students;
+END
+
+- buat routes :
+
+Route::get('read', function(){
+
+	$student = DB::select('call viewStudent()');
+	// dd($student);
+	//var_dump($student);
+	dump($student);
+});
+########### END SELECT FROM ALL ############
+
+########### SELECT BY ID ############
+
+4. buat STORED PROCEDURE viewStudentbyid (berdasarkan where clause field id) (SELECT ALL BY ID)
+- call viewStudentbyid(1);
+
+SP viewStudentbyid :
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `viewStudentbyid`(
+	IN `id` INT
+)
+BEGIN
+	SELECT * FROM students WHERE students.id = id;
+END 
+
+- buat routes : 
+
+Route::get('/read/{id}', function($id){
+
+	$student = DB::select('call viewStudentbyid(?)', [$id]);
+	// dd($student);
+	//var_dump($student);
+	dump($student);
+});
+
+########### END SELECT BY ID ############
+
+########### INSERT 1 PARAMETER ############
+4. buat STORED PROCEDURE insertStudent (CREATE/ INSERT 1 PARAMETER)
+
+- call insertStudent('Gilang');
+
+SP insertStudent :
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `insertStudent`(name varchar(50))
+BEGIN
+	INSERT INTO students (name) VALUES(name);
+END
+
+- buat routes : 
+
+// INSERT (1 Parameter)
+
+Route::get('/insert1', function(){
+
+	$name = 'ada';
+	DB::select('call insertStudent(?)', [$name]);
+	// dd($student);
+	//var_dump($student);
+	echo "inserted successfully";
+	dump($name);
+});
+
+########### END INSERT 1 PARAMETER ############
+
+########### INSERT 2 PARAMETER ############
+5. buat STORED PROCEDURE insertStudent2 (CREATE/ INSERT 2 PARAMETER)
+
+- call insertStudent2('satu','L');
+
+SP insertStudent2 :
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `insertStudent2`(name varchar(50),sex varchar(50))
+BEGIN
+	INSERT INTO students (name,sex) VALUES(name,sex);
+END
+
+- buat routes : 
+
+// INSERT (2 Parameter)
+
+Route::get('/insert2', function(){
+
+	$name = 'sayur';
+	$sex = 'M';
+	DB::select('call insertStudent2(?,?)', [$name,$sex]);
+	// dd($student);
+	//var_dump($student);
+	echo "inserted successfully";
+	dump($name);
+});
+
+########### END INSERT 2 PARAMETER ############
+
+
+########### DELETE BY ID ############
+
+6. buat STORED PROCEDURE deletestudentbyid (DELETE BY ID)
+
+- call deletestudentbyid(1);
+
+SP deletestudentbyid :
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `deletestudentbyid`(id int)
+BEGIN
+	DELETE FROM students where students.id = id;
+END
+
+- buat routes : 
+
+// DELETE BY ID
+
+Route::get('/delete{id}', function($id){
+
+	DB::select('call deletestudentbyid(?)', [$id]);
+	// dd($student);
+	//var_dump($student);
+	echo "Delete successfully";
+	//dump($name);
+});
+
+########### END DELETE BY ID ############
+
+
+########### UPDATE BY ID ############
+
+6. buat STORED PROCEDURE updateStudentbyid (UPDATE BY ID)
+
+- call updateStudentbyid('Dadan',1);
+
+SP updateStudentbyid :
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateStudentbyid`(name varchar(50),id int)
+BEGIN
+	UPDATE students SET students.name = name where students.id=id;
+END
+
+- buat routes : 
+
+// UPDATE BY ID
+
+Route::get('/update/{id}', function($id){
+
+	DB::select('call updatestudentbyid(?,?)', ['Gandul', $id]);
+	// dd($student);
+	//var_dump($student);
+	echo "Update successfully";
+	// dump($name);
+});
+########### END DELETE BY ID ############
+
+7. UPDATE BY FORM REQUEST
+- buka routes.rb dan buat routes untuk get form updatenya
+isi : 
+
+// GET FORM FOR METHOD POST (UPDATE)
+Route::get('/getformupdate', function(){
+	return view('update');
+});
+
+- buat file di resources/views/update.blade.php untuk render view fungsi getformupdate
+isi : 
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Update Students</title>
+	<link rel="stylesheet" href="">
+</head>
+<body>
+	<form method="POST" action="{{url('update')}}">
+		<input type="text" name="id">
+		<br>
+		<input type="text" name="name">
+		<br>
+		<input type="submit" value="Update">
+	</form>
+</body>
+</html>
+
+- karena bekerja dengan form request maka kita tambahkan dependency request di routes.rb:
+use Illuminate\Http\Request;
+
+- TAMBAHKAN ROUTE UNTUK METHOD POST UPDATE
+
+// UPDATE BY ID ON POST METHOD
+
+Route::post('/update', function(Request $request){
+
+	$id = $request->id;
+	$name = $request->name;
+	DB::select('call updatestudentbyid(?,?)', [$name, $id]);
+
+	return back();
+});
+
+
+### TROUBLE SHOOTING ###
+
+1. QueryException in Connection.php line 647: SQLSTATE[HY000]: General error: 1364 Field 'sex' doesn't have a default value (SQL: call insertStudent(ada))
+SOLUSI :
+
+kolom sex defaultnya karena tidak boleh null alternatife dibuat allow not null
